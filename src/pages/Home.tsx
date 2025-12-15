@@ -1,81 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-import VideoCard from '@/components/VideoCard';
 import Sidebar from '@/components/Sidebar';
+import { getBadgeForSubscribers } from '@/utils/badges';
 
-const mockVideos = [
-  {
-    id: '1',
-    title: 'Креативный дизайн в 2025: тренды и инновации',
-    channel: 'DesignHub',
-    views: '2.3М',
-    uploadDate: '2 дня назад',
-    thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80',
-    duration: '15:42',
-    verified: true
-  },
-  {
-    id: '2',
-    title: 'Путешествие в Исландию: северное сияние',
-    channel: 'TravelVlog',
-    views: '1.8М',
-    uploadDate: '5 дней назад',
-    thumbnail: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&q=80',
-    duration: '22:15',
-    verified: true
-  },
-  {
-    id: '3',
-    title: 'Нейросети и искусство: будущее творчества',
-    channel: 'TechArt',
-    views: '985К',
-    uploadDate: '1 неделю назад',
-    thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80',
-    duration: '18:30',
-    verified: false
-  },
-  {
-    id: '4',
-    title: 'Космические открытия 2024: документальный фильм',
-    channel: 'SpaceExplorer',
-    views: '3.2М',
-    uploadDate: '3 дня назад',
-    thumbnail: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&q=80',
-    duration: '45:20',
-    verified: true
-  },
-  {
-    id: '5',
-    title: 'Минималистичная кухня: обзор и советы',
-    channel: 'HomeStyle',
-    views: '567К',
-    uploadDate: '4 дня назад',
-    thumbnail: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
-    duration: '12:08',
-    verified: false
-  },
-  {
-    id: '6',
-    title: 'Электронная музыка: продакшн с нуля',
-    channel: 'BeatMakers',
-    views: '1.1М',
-    uploadDate: '1 день назад',
-    thumbnail: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800&q=80',
-    duration: '28:55',
-    verified: true
-  }
-];
+interface UserData {
+  channelName: string;
+  avatar: string;
+  subscribers: number;
+  createdAt: string;
+}
 
 const trendingTags = [
   'Музыка', 'Игры', 'Образование', 'Технологии', 'Кино', 'Спорт', 'Комедия', 'Новости'
 ];
 
 const Home = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('viatube_user');
+    if (!storedUser) {
+      navigate('/auth');
+    } else {
+      setUserData(JSON.parse(storedUser));
+    }
+  }, [navigate]);
+
+  if (!userData) return null;
+
+  const userBadge = getBadgeForSubscribers(userData.subscribers);
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,8 +66,20 @@ const Home = () => {
                 <Button size="icon" variant="ghost" className="h-12 w-12">
                   <Icon name="Bell" size={20} />
                 </Button>
-                <Button size="icon" className="h-12 w-12 bg-gradient-to-r from-primary to-secondary neon-glow">
-                  <Icon name="User" size={20} />
+                <Button 
+                  size="icon" 
+                  className="h-12 w-12 bg-gradient-to-br from-primary to-secondary neon-glow relative"
+                  onClick={() => navigate('/profile')}
+                >
+                  <span className="text-2xl">{userData.avatar}</span>
+                  {userBadge && (
+                    <img 
+                      src={userBadge.icon} 
+                      alt="badge" 
+                      className="absolute -bottom-1 -right-1 h-5 w-5" 
+                      style={{ filter: userBadge.color }}
+                    />
+                  )}
                 </Button>
               </div>
             </div>
@@ -131,32 +103,39 @@ const Home = () => {
               ))}
             </div>
 
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold gradient-text mb-1">Рекомендации для вас</h2>
-              <p className="text-muted-foreground">На основе ваших интересов</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
-              {mockVideos.map((video, index) => (
-                <div 
-                  key={video.id}
-                  className="animate-slide-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <VideoCard video={video} />
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-12">
-              <div className="flex items-center gap-3 mb-6">
-                <Icon name="TrendingUp" className="text-primary" size={28} />
-                <h2 className="text-2xl font-bold gradient-text">В тренде</h2>
+            <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
+              <div className="h-32 w-32 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mb-6">
+                <Icon name="Video" size={64} className="text-primary" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mockVideos.slice(0, 3).map((video) => (
-                  <VideoCard key={video.id} video={video} />
-                ))}
+              <h2 className="text-3xl font-bold gradient-text mb-3">Пока здесь пусто</h2>
+              <p className="text-muted-foreground text-lg mb-8 text-center max-w-md">
+                Видео появятся, когда создатели начнут загружать контент на ViaTube
+              </p>
+              <div className="bg-card/50 border border-border/50 rounded-xl p-6 max-w-md">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-4xl">{userData.avatar}</span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-lg">{userData.channelName}</span>
+                      {userBadge && (
+                        <img 
+                          src={userBadge.icon} 
+                          alt="badge" 
+                          className="h-5 w-5" 
+                          style={{ filter: userBadge.color }}
+                        />
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {userData.subscribers} подписчиков
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {userBadge 
+                    ? `Поздравляем! Вы заработали ${userBadge.name}` 
+                    : 'Наберите 100 подписчиков для получения первой награды'}
+                </p>
               </div>
             </div>
           </div>
